@@ -22,4 +22,73 @@ yum -y install ceph-deploy
  查看当前目录的。conf
  集群安装软件  tets是主机
  ceph-deploy install test1 test2
+ 初始节点
+ ceph-deploy mon create-initi
+ 查看节点的软件
+ rpm -qa | grep ceph
+ 查看服务
+ systemctl status ceph-mon@ecph1.service
+ ceph -s 确认状态
+[root@ecph1 ceph]# ceph -s
+    cluster ebf238af-ce7c-49f5-9775-e2a8b8e54cda
+     health HEALTH_ERR
+            clock skew detected on mon.ecph2, mon.ecph3, mon.ecph4
+            64 pgs are stuck inactive for more than 300 seconds
+            64 pgs stuck inactive
+            no osds
+            Monitor clock skew detected 
+            monmap e1: 4 mons at {ecph1=192.168.4.10:6789/0,ecph2=192.168.4.20:6789/0,ecph3=192.168.4.30:6789/0,ecph4=192.168.4.40:6789/0}
+            election epoch 6, quorum 0,1,2,3 ecph1,ecph2,ecph3,ecph4   monmap点
+     osdmap e1: 0 osds: 0 up, 0 in   存储点
+            flags sortbitwise
+      pgmap v2: 64 pgs, 1 pools, 0 bytes data, 0 objects
+            0 kB used, 0 kB / 0 kB avail
+                  64 creating
+vda[操作系统]
+vdb [vdb1  vdb2] 做缓存分别给
+vdc vdb1---vdc
+vdd vdb2---vdd
+分区每个个节点进行
+ parted  /dev/vdb  mklabel  gpt
+ parted  /dev/vdb  mkpart primary  1M  50%
+ parted  /dev/vdb  mkpart primary  50%  100%
+ chown  ceph.ceph  /dev/vdb1
+ chown  ceph.ceph  /dev/vdb2
+//这两个分区用来做存储服务器的日志journal盘
+初始化清空磁盘数据（仅test操作即可）
+ceph-deploy disk  zap  test1:vdc   test1:vdd    
+ceph-deploy disk  zap  test2:vdc   test2:vdd
+ceph-deploy disk  zap  test3:vdc   test3:vdd
+
+创建OSD存储空间 
+ceph-deploy osd create   test1:vdc:/dev/vdb1 test1:vdd:/dev/vdb2  
+ceph-deploy osd create   test2:vdc:/dev/vdb1 test2:vdd:/dev/vdb2 
+ceph -s 查看
+
+给用户存储
+访问 Linux内核kernel访问krbd
+在test上测试ceph osd lspools 查看池子
+创建池子
+ rbd create demo-image --image-feature  layering --size 10G  空间自己写
+ 缩小空间大小
+  rbd resize --size 7G image --allow-shrink
+扩容
+ rbd resize --size 15G image
+ rbd info image
+ 客户端安装
+ yum -y install ceph-common
+ 你的吧/ec/ceph/的ceph.client.admin和ceph.conf 拷贝到、/etc/ceph/
+ rdb ls 查看共享名
+ rdb map image
+ 自己客户端格式化挂载
+ mkfs.xfs /dev/rbd0
+ mount  /dev/rbd0  /mnt
  
+ 查看创建快照
+ rdb snap ls 块设备名称
+ 创建             快照名       定义名
+ rbd snap create image --snap image-snap1   别名
+
+
+
+

@@ -12,3 +12,14 @@ MDSS
 文件系统共享
 client
 客户端
+安装软件
+yum -y install ceph-deploy
+创建一个临时目录
+ mkdir ceph-cluster
+ cd 
+ ceph 创建集群   test是主机
+ ceph-deploy new test1 test2
+ 查看当前目录的。conf
+ 集群安装软件  tets是主机
+ ceph-deploy install test1 test2
+ 
